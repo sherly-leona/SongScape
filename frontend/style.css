@@ -1,0 +1,125 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html {
+    scroll-behavior: smooth;
+}
+body {
+    background-color: #e8d1a7;
+    color: #442d1c;
+    font-family: "Instrument Serif", serif;
+    overflow-x: hidden;
+}
+.title-section {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.tt {
+    text-align: center;
+}
+.title {
+    font-size: 100px;
+    font-weight: bolder;
+    margin-bottom: 20px;
+}
+.tagline {
+    font-size: 40px;
+    font-weight: bold;
+}
+.input-section {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    padding-left: 13%;
+}
+.input-info {
+    width: 40%;
+}
+.section-label {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 50px;
+}
+.description {
+    font-size: 35px;
+    font-weight: bold;
+    line-height: 1.4;
+}
+.identity-section {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.artist-form {
+    width: 500px;
+}
+.form-title {
+    font-size: 25px;
+    font-weight: bold;
+    margin-bottom: 70px;
+}
+.artist-input {
+    display: flex;
+    align-items: center;
+    margin-bottom: 45px;
+}
+.artist-input label {
+    width: 140px;
+    font-size: 23px;
+    font-weight: bold;
+}
+.artist-input input {
+    width: 300px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #442d1c;
+    color: #442d1c;
+    font-family: "Instrument Serif", serif;
+    font-size: 24px;
+    padding: 5px;
+    outline: none;
+}
+#generate {
+    margin-left: 140px;
+    margin-top: 20px;
+    background: transparent;
+    border: none;
+    color: #442d1c;
+    font-family: "Instrument Serif", serif;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+#generate:hover {
+    transform: translateX(8px);
+}
+.sticker {
+    position: absolute;
+    width: 100px;
+    z-index: 1;
+    pointer-events: none;
+    animation: stickerPop 0.5s ease;
+}
+
+
+@keyframes stickerPop {
+
+    from {
+        opacity: 0;
+
+        scale: 0.5;
+    }
+
+    to {
+        opacity: 1;
+
+        scale: 1;
+    }
+
+}
