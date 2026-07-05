@@ -7,7 +7,6 @@ const app = express();
 
 const PORT = process.env.PORT || 3002;
 
-
 app.use(express.json());
 
 app.use(
@@ -17,281 +16,475 @@ app.use(
 );
 
 
-const moodMap = {
+/* ---------------------------------
+   TAGS WE DON'T WANT TO DISPLAY
+---------------------------------- */
 
-    dreamy: [
-        "dream pop",
-        "dreamy",
-        "ambient",
-        "shoegaze",
-        "ethereal",
-        "psychedelic",
-        "bedroom pop"
-    ],
-
-    melancholic: [
-        "sad",
-        "melancholic",
-        "melancholy",
-        "slowcore",
-        "emo",
-        "dark",
-        "indie folk",
-        "sadcore"
-    ],
-
-    bright: [
-        "pop",
-        "k-pop",
-        "dance",
-        "electropop",
-        "synthpop",
-        "happy",
-        "funk",
-        "disco"
-    ],
-
-    warm: [
-        "jazz",
-        "soul",
-        "folk",
-        "acoustic",
-        "singer-songwriter",
-        "bossa nova",
-        "rnb",
-        "r&b"
-    ],
-
-    static: [
-        "rock",
-        "alternative",
-        "electronic",
-        "post-punk",
-        "noise",
-        "industrial",
-        "punk",
-        "experimental"
-    ]
-};
+const ignoredTags = [
+    "seen live",
+    "favorites",
+    "favourites",
+    "favorite",
+    "favourite",
+    "love",
+    "awesome",
+    "beautiful",
+    "cool",
+    "male",
+    "female",
+    "american",
+    "british",
+    "korean",
+    "japanese",
+    "90s",
+    "80s",
+    "70s",
+    "60s",
+    "00s",
+    "2010s",
+    "2020s"
+];
 
 
-function classifyTag(tagName) {
+function isUsefulTag(tagName) {
+    const tag = tagName.toLowerCase();
 
-    const tag =
-        tagName.toLowerCase();
-
-
-    for (const mood in moodMap) {
-
-        if (moodMap[mood].includes(tag)) {
-
-            return mood;
-
-        }
-
-    }
-
-
-    return null;
+    return !ignoredTags.some(
+        ignoredTag => tag.includes(ignoredTag)
+    );
 }
 
 
-function calculateMoods(artistResults) {
+/* ---------------------------------
+   ACTUAL LAST.FM COMPOSITION
+---------------------------------- */
 
-    const moodScores = {
-        dreamy: 0,
-        melancholic: 0,
-        bright: 0,
-        warm: 0,
-        static: 0
-    };
+function calculateComposition(artistResults) {
+    const tagScores = {};
 
 
     artistResults.forEach((artist) => {
 
         artist.tags.forEach((tag) => {
 
-            const mood =
-                classifyTag(tag.name);
+            const tagName =
+                tag.name
+                    .toLowerCase()
+                    .trim();
 
 
-            if (mood) {
-
-                moodScores[mood] +=
-                    Number(tag.count);
-
+            if (!isUsefulTag(tagName)) {
+                return;
             }
+
+
+            if (!tagScores[tagName]) {
+                tagScores[tagName] = 0;
+            }
+
+
+            tagScores[tagName] +=
+                Number(tag.count);
 
         });
 
     });
 
 
+    const topTags =
+        Object.entries(tagScores)
+            .sort(
+                (a, b) => b[1] - a[1]
+            )
+            .slice(0, 4);
+
+
     const total =
-        Object.values(moodScores)
-            .reduce(
-                (sum, score) => sum + score,
-                0
-            );
+        topTags.reduce(
+            (sum, tag) => sum + tag[1],
+            0
+        );
 
 
     if (total === 0) {
-
-        return [
-            {
-                mood: "DREAMY",
-                percentage: 25
-            },
-
-            {
-                mood: "WARM",
-                percentage: 25
-            },
-
-            {
-                mood: "BRIGHT",
-                percentage: 25
-            },
-
-            {
-                mood: "MELANCHOLIC",
-                percentage: 25
-            }
-        ];
-
+        return [];
     }
 
 
-    return Object.entries(moodScores)
+    const composition =
+        topTags.map(([tag, score]) => ({
 
-        .map(([mood, score]) => ({
-
-            mood: mood.toUpperCase(),
+            mood: tag.toUpperCase(),
 
             percentage:
                 Math.round(
                     (score / total) * 100
                 )
 
-        }))
+        }));
 
-        .filter(
-            mood => mood.percentage > 0
-        )
 
-        .sort(
-            (a, b) =>
-                b.percentage - a.percentage
-        )
-
-        .slice(0, 4);
-
+    return composition;
 }
 
 
-function generateIdentity(moods) {
+/* ---------------------------------
+   GENRE → SONGSCAPE AESTHETIC
+---------------------------------- */
 
+function interpretTag(tagName) {
+    const tag = tagName.toLowerCase();
+
+
+    if (
+        tag.includes("dream") ||
+        tag.includes("shoegaze") ||
+        tag.includes("ambient") ||
+        tag.includes("ethereal") ||
+        tag.includes("psychedelic") ||
+        tag.includes("bedroom") ||
+        tag.includes("chill")
+    ) {
+        return "DREAMY";
+    }
+
+
+    if (
+        tag.includes("grunge") ||
+        tag.includes("punk") ||
+        tag.includes("metal") ||
+        tag.includes("rock") ||
+        tag.includes("noise") ||
+        tag.includes("industrial") ||
+        tag.includes("garage")
+    ) {
+        return "STATIC";
+    }
+
+
+    if (
+        tag.includes("pop") ||
+        tag.includes("dance") ||
+        tag.includes("disco") ||
+        tag.includes("funk") ||
+        tag.includes("hyperpop") ||
+        tag.includes("electropop")
+    ) {
+        return "BRIGHT";
+    }
+
+
+    if (
+        tag.includes("jazz") ||
+        tag.includes("soul") ||
+        tag.includes("folk") ||
+        tag.includes("acoustic") ||
+        tag.includes("r&b") ||
+        tag.includes("rnb") ||
+        tag.includes("bossa") ||
+        tag.includes("singer-songwriter")
+    ) {
+        return "WARM";
+    }
+
+
+    if (
+        tag.includes("emo") ||
+        tag.includes("sad") ||
+        tag.includes("dark") ||
+        tag.includes("slowcore") ||
+        tag.includes("goth") ||
+        tag.includes("melanchol")
+    ) {
+        return "MELANCHOLIC";
+    }
+
+
+    if (
+        tag.includes("electronic") ||
+        tag.includes("alternative") ||
+        tag.includes("experimental") ||
+        tag.includes("post-punk")
+    ) {
+        return "STATIC";
+    }
+
+
+    return "UNKNOWN";
+}
+
+
+/* ---------------------------------
+   GENERATE SONGSCAPE MOODS
+---------------------------------- */
+
+function calculateAesthetics(composition) {
+    const aestheticScores = {
+        DREAMY: 0,
+        MELANCHOLIC: 0,
+        BRIGHT: 0,
+        WARM: 0,
+        STATIC: 0
+    };
+
+
+    composition.forEach((tag) => {
+
+        const aesthetic =
+            interpretTag(tag.mood);
+
+
+        if (aesthetic !== "UNKNOWN") {
+
+            aestheticScores[aesthetic] +=
+                tag.percentage;
+
+        }
+
+    });
+
+
+    return Object.entries(aestheticScores)
+        .filter(
+            ([mood, score]) => score > 0
+        )
+        .sort(
+            (a, b) => b[1] - a[1]
+        )
+        .map(([mood, score]) => ({
+            mood,
+            score
+        }));
+}
+
+
+/* ---------------------------------
+   GENERATE IDENTITY
+---------------------------------- */
+
+function generateIdentity(aesthetics) {
     const mainMood =
-        moods[0]?.mood;
-
+        aesthetics[0]?.mood || "UNKNOWN";
 
     const secondMood =
-        moods[1]?.mood;
+        aesthetics[1]?.mood || mainMood;
 
 
     const prefixes = {
+        DREAMY: [
+            "MIDNIGHT",
+            "LUNAR",
+            "CELESTIAL",
+            "DISTANT"
+        ],
 
-        DREAMY: "MIDNIGHT",
+        MELANCHOLIC: [
+            "FADING",
+            "LONELY",
+            "HOLLOW",
+            "QUIET"
+        ],
 
-        MELANCHOLIC: "LONELY",
+        BRIGHT: [
+            "GOLDEN",
+            "NEON",
+            "SUNLIT",
+            "GLITTER"
+        ],
 
-        BRIGHT: "GOLDEN",
+        WARM: [
+            "VELVET",
+            "AMBER",
+            "SOFT",
+            "AUTUMN"
+        ],
 
-        WARM: "VELVET",
+        STATIC: [
+            "ELECTRIC",
+            "BROKEN",
+            "ANALOG",
+            "DISTORTED"
+        ],
 
-        STATIC: "ELECTRIC"
-
+        UNKNOWN: [
+            "UNKNOWN",
+            "DISTANT",
+            "HIDDEN"
+        ]
     };
 
 
     const endings = {
+        DREAMY: [
+            "DREAMER",
+            "ORBIT",
+            "MOON",
+            "VISION"
+        ],
 
-        DREAMY: "DREAMER",
+        MELANCHOLIC: [
+            "WANDERER",
+            "GHOST",
+            "ECHO",
+            "MEMORY"
+        ],
 
-        MELANCHOLIC: "WANDERER",
+        BRIGHT: [
+            "STAR",
+            "HEART",
+            "SPARK",
+            "SUN"
+        ],
 
-        BRIGHT: "STAR",
+        WARM: [
+            "SOUL",
+            "ROMANTIC",
+            "GLOW",
+            "HEART"
+        ],
 
-        WARM: "SOUL",
+        STATIC: [
+            "SIGNAL",
+            "FREQUENCY",
+            "RIOT",
+            "NOISE"
+        ],
 
-        STATIC: "SIGNAL"
-
+        UNKNOWN: [
+            "FREQUENCY",
+            "SIGNAL",
+            "WORLD"
+        ]
     };
 
 
+    const prefixOptions =
+        prefixes[mainMood];
+
+    const endingOptions =
+        endings[secondMood];
+
+
     const prefix =
-        prefixes[mainMood] || "MIDNIGHT";
+        prefixOptions[
+            Math.floor(
+                Math.random() *
+                prefixOptions.length
+            )
+        ];
 
 
     const ending =
-        endings[secondMood] ||
-        endings[mainMood] ||
-        "DREAMER";
+        endingOptions[
+            Math.floor(
+                Math.random() *
+                endingOptions.length
+            )
+        ];
 
 
     return `THE ${prefix} ${ending}`;
-
 }
 
 
-function generateWorld(moods) {
+/* ---------------------------------
+   GENERATE WORLD
+---------------------------------- */
 
+function generateWorld(aesthetics) {
     const worldMap = {
-
         DREAMY: {
             symbol: "☾",
-            name: "MOONLIGHT"
+            names: [
+                "MOONLIGHT",
+                "ORBIT",
+                "MIST",
+                "DREAMSCAPE"
+            ]
         },
 
         MELANCHOLIC: {
             symbol: "○",
-            name: "HAZE"
+            names: [
+                "HAZE",
+                "ECHO",
+                "RAIN",
+                "MEMORY"
+            ]
         },
 
         BRIGHT: {
             symbol: "✦",
-            name: "STARLIGHT"
+            names: [
+                "STARLIGHT",
+                "SPARK",
+                "SUNLIGHT",
+                "NEON"
+            ]
         },
 
         WARM: {
             symbol: "☼",
-            name: "GLOW"
+            names: [
+                "GLOW",
+                "AMBER",
+                "VELVET",
+                "SUNSET"
+            ]
         },
 
         STATIC: {
             symbol: "⌁",
-            name: "STATIC"
+            names: [
+                "STATIC",
+                "SIGNAL",
+                "NOISE",
+                "FREQUENCY"
+            ]
         }
-
     };
 
 
-    return moods
+    const usableAesthetics =
+        aesthetics.length > 0
+            ? aesthetics
+            : [
+                { mood: "DREAMY" },
+                { mood: "STATIC" },
+                { mood: "WARM" }
+            ];
+
+
+    return usableAesthetics
         .slice(0, 3)
-        .map((mood) => ({
+        .map((aesthetic) => {
 
-            mood: mood.mood,
+            const world =
+                worldMap[aesthetic.mood];
 
-            symbol:
-                worldMap[mood.mood].symbol,
 
-            name:
-                worldMap[mood.mood].name
+            const randomName =
+                world.names[
+                    Math.floor(
+                        Math.random() *
+                        world.names.length
+                    )
+                ];
 
-        }));
 
+            return {
+                mood: aesthetic.mood,
+                symbol: world.symbol,
+                name: randomName
+            };
+
+        });
 }
 
+
+/* ---------------------------------
+   LAST.FM ANALYZE ROUTE
+---------------------------------- */
 
 app.post("/analyze", async (req, res) => {
 
@@ -305,10 +498,8 @@ app.post("/analyze", async (req, res) => {
     ) {
 
         return res.status(400).json({
-
             error:
                 "Please provide exactly three artists"
-
         });
 
     }
@@ -329,10 +520,8 @@ app.post("/analyze", async (req, res) => {
                 await fetch(url, {
 
                     headers: {
-
                         "User-Agent":
                             "Songscape/1.0"
-
                     }
 
                 });
@@ -345,10 +534,8 @@ app.post("/analyze", async (req, res) => {
             if (data.error) {
 
                 return res.status(400).json({
-
                     error:
                         `Could not analyse ${artist}`
-
                 });
 
             }
@@ -356,7 +543,7 @@ app.post("/analyze", async (req, res) => {
 
             const tags =
                 data.toptags?.tag
-                    ?.slice(0, 15)
+                    ?.slice(0, 20)
                     .map((tag) => ({
 
                         name: tag.name,
@@ -373,44 +560,70 @@ app.post("/analyze", async (req, res) => {
                     data.toptags?.["@attr"]?.artist
                     || artist,
 
-                tags: tags
+                tags
 
             });
 
         }
 
 
-        const moods =
-            calculateMoods(artistResults);
+        console.log(
+            "LAST.FM ARTIST DATA:"
+        );
+
+        console.dir(
+            artistResults,
+            { depth: null }
+        );
+
+
+        const composition =
+            calculateComposition(
+                artistResults
+            );
+
+
+        const aesthetics =
+            calculateAesthetics(
+                composition
+            );
 
 
         const identity =
-            generateIdentity(moods);
+            generateIdentity(
+                aesthetics
+            );
 
 
         const world =
-            generateWorld(moods);
+            generateWorld(
+                aesthetics
+            );
 
 
         const result = {
 
-            identity: identity,
+            identity,
 
             artists:
                 artistResults.map(
                     artist => artist.artist
                 ),
 
-            composition: moods,
+            composition,
 
-            world: world
+            world
 
         };
 
 
         console.log(
-            "SONGSCAPE RESULT:",
-            result
+            "SONGSCAPE RESULT:"
+        );
+
+        console.dir(
+            result,
+            { depth: null }
         );
 
 
@@ -426,10 +639,8 @@ app.post("/analyze", async (req, res) => {
 
 
         res.status(500).json({
-
             error:
                 "Songscape could not generate your world"
-
         });
 
     }
