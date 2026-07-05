@@ -1,25 +1,29 @@
 const express = require("express");
 const path = require("path");
-
 require("dotenv").config();
-
 const app = express();
-
 const PORT = process.env.PORT || 3002;
-
+/* ---------------------------------
+   MIDDLEWARE
+---------------------------------- */
 app.use(express.json());
-
 app.use(
     express.static(
         path.join(__dirname, "frontend")
     )
 );
-
-
+/* ---------------------------------
+   CHECK API KEY
+---------------------------------- */
+console.log(
+    "LAST.FM API KEY LOADED:",
+    process.env.LASTFM_API_KEY
+        ? "YES"
+        : "NO"
+);
 /* ---------------------------------
    TAGS WE DON'T WANT TO DISPLAY
 ---------------------------------- */
-
 const ignoredTags = [
     "seen live",
     "favorites",
@@ -44,98 +48,81 @@ const ignoredTags = [
     "2010s",
     "2020s"
 ];
-
-
 function isUsefulTag(tagName) {
     const tag = tagName.toLowerCase();
-
     return !ignoredTags.some(
-        ignoredTag => tag.includes(ignoredTag)
+        ignoredTag =>
+            tag.includes(ignoredTag)
     );
 }
-
-
 /* ---------------------------------
-   ACTUAL LAST.FM COMPOSITION
+   CALCULATE LAST.FM COMPOSITION
 ---------------------------------- */
-
-function calculateComposition(artistResults) {
+function calculateComposition(
+    artistResults
+) {
     const tagScores = {};
-
-
-    artistResults.forEach((artist) => {
-
-        artist.tags.forEach((tag) => {
-
-            const tagName =
-                tag.name
-                    .toLowerCase()
-                    .trim();
-
-
-            if (!isUsefulTag(tagName)) {
-                return;
-            }
-
-
-            if (!tagScores[tagName]) {
-                tagScores[tagName] = 0;
-            }
-
-
-            tagScores[tagName] +=
-                Number(tag.count);
-
-        });
-
-    });
-
-
+    artistResults.forEach(
+        (artist) => {
+            artist.tags.forEach(
+                (tag) => {
+                    const tagName =
+                        tag.name
+                            .toLowerCase()
+                            .trim();
+                    if (
+                        !isUsefulTag(tagName)
+                    ) {
+                        return;
+                    }
+                    if (
+                        !tagScores[tagName]
+                    ) {
+                        tagScores[tagName] = 0;
+                    }
+                    tagScores[tagName] +=
+                        Number(tag.count);
+                }
+            );
+        }
+    );
     const topTags =
         Object.entries(tagScores)
             .sort(
-                (a, b) => b[1] - a[1]
+                (a, b) =>
+                    b[1] - a[1]
             )
             .slice(0, 4);
-
-
+    console.log(
+        "TOP TAGS:",
+        topTags
+    );
     const total =
         topTags.reduce(
-            (sum, tag) => sum + tag[1],
+            (sum, tag) =>
+                sum + tag[1],
             0
         );
-
-
     if (total === 0) {
         return [];
     }
-
-
-    const composition =
-        topTags.map(([tag, score]) => ({
-
-            mood: tag.toUpperCase(),
-
+    return topTags.map(
+        ([tag, score]) => ({
+            mood:
+                tag.toUpperCase(),
             percentage:
                 Math.round(
                     (score / total) * 100
                 )
-
-        }));
-
-
-    return composition;
+        })
+    );
 }
-
-
 /* ---------------------------------
    GENRE → SONGSCAPE AESTHETIC
 ---------------------------------- */
-
 function interpretTag(tagName) {
-    const tag = tagName.toLowerCase();
-
-
+    const tag =
+        tagName.toLowerCase();
     if (
         tag.includes("dream") ||
         tag.includes("shoegaze") ||
@@ -147,8 +134,6 @@ function interpretTag(tagName) {
     ) {
         return "DREAMY";
     }
-
-
     if (
         tag.includes("grunge") ||
         tag.includes("punk") ||
@@ -159,9 +144,8 @@ function interpretTag(tagName) {
         tag.includes("garage")
     ) {
         return "STATIC";
+
     }
-
-
     if (
         tag.includes("pop") ||
         tag.includes("dance") ||
@@ -172,8 +156,6 @@ function interpretTag(tagName) {
     ) {
         return "BRIGHT";
     }
-
-
     if (
         tag.includes("jazz") ||
         tag.includes("soul") ||
@@ -182,12 +164,12 @@ function interpretTag(tagName) {
         tag.includes("r&b") ||
         tag.includes("rnb") ||
         tag.includes("bossa") ||
-        tag.includes("singer-songwriter")
+        tag.includes(
+            "singer-songwriter"
+        )
     ) {
         return "WARM";
     }
-
-
     if (
         tag.includes("emo") ||
         tag.includes("sad") ||
@@ -198,8 +180,6 @@ function interpretTag(tagName) {
     ) {
         return "MELANCHOLIC";
     }
-
-
     if (
         tag.includes("electronic") ||
         tag.includes("alternative") ||
@@ -208,17 +188,15 @@ function interpretTag(tagName) {
     ) {
         return "STATIC";
     }
-
-
     return "UNKNOWN";
+
 }
-
-
 /* ---------------------------------
-   GENERATE SONGSCAPE MOODS
+   CALCULATE AESTHETICS
 ---------------------------------- */
-
-function calculateAesthetics(composition) {
+function calculateAesthetics(
+    composition
+) {
     const aestheticScores = {
         DREAMY: 0,
         MELANCHOLIC: 0,
@@ -226,50 +204,48 @@ function calculateAesthetics(composition) {
         WARM: 0,
         STATIC: 0
     };
-
-
-    composition.forEach((tag) => {
-
-        const aesthetic =
-            interpretTag(tag.mood);
-
-
-        if (aesthetic !== "UNKNOWN") {
-
-            aestheticScores[aesthetic] +=
-                tag.percentage;
-
+    composition.forEach(
+        (tag) => {
+            const aesthetic =
+                interpretTag(
+                    tag.mood
+                );
+            if (
+                aesthetic !== "UNKNOWN"
+            ) {
+                aestheticScores[aesthetic] += tag.percentage;
+            }
         }
-
-    });
-
-
-    return Object.entries(aestheticScores)
-        .filter(
-            ([mood, score]) => score > 0
-        )
-        .sort(
-            (a, b) => b[1] - a[1]
-        )
-        .map(([mood, score]) => ({
-            mood,
-            score
-        }));
+    );
+    const aesthetics =  Object.entries(aestheticScores).filter(([mood, score]) => score > 0)
+            .sort(
+                (a, b) =>
+                    b[1] - a[1]
+            )
+            .map(
+                ([mood, score]) => ({
+                    mood,
+                    score
+                })
+            );
+    console.log(
+        "AESTHETICS:",
+        aesthetics
+    );
+    return aesthetics;
 }
-
-
 /* ---------------------------------
    GENERATE IDENTITY
 ---------------------------------- */
-
-function generateIdentity(aesthetics) {
+function generateIdentity(
+    aesthetics
+) {
     const mainMood =
-        aesthetics[0]?.mood || "UNKNOWN";
-
+        aesthetics[0]?.mood ||
+        "UNKNOWN";
     const secondMood =
-        aesthetics[1]?.mood || mainMood;
-
-
+        aesthetics[1]?.mood ||
+        mainMood;
     const prefixes = {
         DREAMY: [
             "MIDNIGHT",
@@ -277,43 +253,36 @@ function generateIdentity(aesthetics) {
             "CELESTIAL",
             "DISTANT"
         ],
-
         MELANCHOLIC: [
             "FADING",
             "LONELY",
             "HOLLOW",
             "QUIET"
         ],
-
         BRIGHT: [
             "GOLDEN",
             "NEON",
             "SUNLIT",
             "GLITTER"
         ],
-
         WARM: [
             "VELVET",
             "AMBER",
             "SOFT",
             "AUTUMN"
         ],
-
         STATIC: [
             "ELECTRIC",
             "BROKEN",
             "ANALOG",
             "DISTORTED"
         ],
-
         UNKNOWN: [
             "UNKNOWN",
             "DISTANT",
             "HIDDEN"
         ]
     };
-
-
     const endings = {
         DREAMY: [
             "DREAMER",
@@ -321,77 +290,49 @@ function generateIdentity(aesthetics) {
             "MOON",
             "VISION"
         ],
-
         MELANCHOLIC: [
             "WANDERER",
             "GHOST",
             "ECHO",
             "MEMORY"
         ],
-
         BRIGHT: [
             "STAR",
             "HEART",
             "SPARK",
             "SUN"
         ],
-
         WARM: [
             "SOUL",
             "ROMANTIC",
             "GLOW",
             "HEART"
         ],
-
         STATIC: [
             "SIGNAL",
             "FREQUENCY",
             "RIOT",
             "NOISE"
         ],
-
         UNKNOWN: [
             "FREQUENCY",
             "SIGNAL",
             "WORLD"
         ]
     };
-
-
-    const prefixOptions =
-        prefixes[mainMood];
-
-    const endingOptions =
-        endings[secondMood];
-
-
-    const prefix =
-        prefixOptions[
-            Math.floor(
-                Math.random() *
-                prefixOptions.length
-            )
-        ];
-
-
+    const prefixOptions = prefixes[mainMood];
+    const endingOptions = endings[secondMood];
+    const prefix =prefixOptions[Math.floor(Math.random() *prefixOptions.length)];
     const ending =
-        endingOptions[
-            Math.floor(
-                Math.random() *
-                endingOptions.length
-            )
-        ];
-
-
+        endingOptions[Math.floor(Math.random() * endingOptions.length)];
     return `THE ${prefix} ${ending}`;
 }
-
-
 /* ---------------------------------
    GENERATE WORLD
 ---------------------------------- */
-
-function generateWorld(aesthetics) {
+function generateWorld(
+    aesthetics
+) {
     const worldMap = {
         DREAMY: {
             symbol: "☾",
@@ -402,7 +343,6 @@ function generateWorld(aesthetics) {
                 "DREAMSCAPE"
             ]
         },
-
         MELANCHOLIC: {
             symbol: "○",
             names: [
@@ -412,7 +352,6 @@ function generateWorld(aesthetics) {
                 "MEMORY"
             ]
         },
-
         BRIGHT: {
             symbol: "✦",
             names: [
@@ -422,7 +361,6 @@ function generateWorld(aesthetics) {
                 "NEON"
             ]
         },
-
         WARM: {
             symbol: "☼",
             names: [
@@ -432,7 +370,6 @@ function generateWorld(aesthetics) {
                 "SUNSET"
             ]
         },
-
         STATIC: {
             symbol: "⌁",
             names: [
@@ -443,215 +380,260 @@ function generateWorld(aesthetics) {
             ]
         }
     };
-
-
     const usableAesthetics =
         aesthetics.length > 0
             ? aesthetics
             : [
-                { mood: "DREAMY" },
-                { mood: "STATIC" },
-                { mood: "WARM" }
+                {
+                    mood: "DREAMY"
+                },
+                {
+                    mood: "STATIC"
+                },
+                {
+                    mood: "WARM"
+                }
             ];
-
-
     return usableAesthetics
         .slice(0, 3)
-        .map((aesthetic) => {
-
-            const world =
-                worldMap[aesthetic.mood];
-
-
-            const randomName =
-                world.names[
-                    Math.floor(
-                        Math.random() *
-                        world.names.length
-                    )
-                ];
-
-
-            return {
-                mood: aesthetic.mood,
-                symbol: world.symbol,
-                name: randomName
-            };
-
-        });
+        .map(
+            (aesthetic) => {
+                const world =
+                    worldMap[
+                        aesthetic.mood
+                    ];
+                const randomName =
+                    world.names[
+                        Math.floor(
+                            Math.random() *
+                            world.names.length
+                        )
+                    ];
+                return {
+                    mood:
+                        aesthetic.mood,
+                    symbol:
+                        world.symbol,
+                    name:
+                        randomName
+                };
+            }
+        );
 }
-
-
 /* ---------------------------------
    LAST.FM ANALYZE ROUTE
----------------------------------- */
-
-app.post("/analyze", async (req, res) => {
-
-    const { artists } = req.body;
-
-
-    if (
-        !artists ||
-        !Array.isArray(artists) ||
-        artists.length !== 3
-    ) {
-
-        return res.status(400).json({
-            error:
-                "Please provide exactly three artists"
-        });
-
-    }
-
-
-    try {
-
-        const artistResults = [];
-
-
-        for (const artist of artists) {
-
-            const url =
-                `https://ws.audioscrobbler.com/2.0/?method=artist.gettoptags&artist=${encodeURIComponent(artist)}&api_key=${process.env.LASTFM_API_KEY}&format=json&autocorrect=1`;
-
-
-            const response =
-                await fetch(url, {
-
-                    headers: {
-                        "User-Agent":
-                            "Songscape/1.0"
-                    }
-
-                });
-
-
-            const data =
-                await response.json();
-
-
-            if (data.error) {
-
-                return res.status(400).json({
+--------------------------------- */
+app.post(
+    "/analyze",
+    async (req, res) => {
+        const { artists } = req.body;
+        console.log(
+            "ARTISTS RECEIVED:",
+            artists
+        );
+        if (
+            !artists ||
+            !Array.isArray(artists) ||
+            artists.length !== 3
+        ) {
+            return res
+                .status(400)
+                .json({
                     error:
-                        `Could not analyse ${artist}`
+                        "Please provide exactly three artists"
                 });
-
-            }
-
-
-            const tags =
-                data.toptags?.tag
-                    ?.slice(0, 20)
-                    .map((tag) => ({
-
-                        name: tag.name,
-
-                        count:
-                            Number(tag.count)
-
-                    })) || [];
-
-
-            artistResults.push({
-
-                artist:
-                    data.toptags?.["@attr"]?.artist
-                    || artist,
-
-                tags
-
-            });
-
         }
-
-
-        console.log(
-            "LAST.FM ARTIST DATA:"
-        );
-
-        console.dir(
-            artistResults,
-            { depth: null }
-        );
-
-
-        const composition =
-            calculateComposition(
-                artistResults
+        if (
+            artists.some(
+                artist =>
+                    !artist ||
+                    artist.trim() === ""
+            )
+        ) {
+            return res
+                .status(400)
+                .json({
+                    error:
+                        "Please enter all three artists"
+                });
+        }
+        if (
+            !process.env.LASTFM_API_KEY
+        ) {
+            console.log(
+                "LAST.FM API KEY IS MISSING"
             );
-
-
-        const aesthetics =
-            calculateAesthetics(
-                composition
+            return res.status(500).json({
+                    error: "Last.fm API key is missing from the server"
+                });
+        }
+        try {
+            const artistResults = [];
+            for (
+                const artist of artists
+            ) {
+                console.log(
+                    "\nANALYSING ARTIST:",
+                    artist
+                );
+                const url =
+                    "https://ws.audioscrobbler.com/2.0/" +
+                    "?method=artist.gettoptags" +
+                    `&artist=${encodeURIComponent(artist)}` +
+                    `&api_key=${process.env.LASTFM_API_KEY}` +
+                    "&format=json" +
+                    "&autocorrect=1";
+                console.log(
+                    "CALLING LAST.FM..."
+                );
+                const response =
+                    await fetch(
+                        url,
+                        {
+                            headers: {
+                                "User-Agent":
+                                    "Songscape/1.0"
+                            }
+                        }
+                    );
+                console.log(
+                    "LAST.FM HTTP STATUS:",
+                    response.status
+                );
+                const data =  await response.json();
+                console.log(
+                    "LAST.FM RAW RESPONSE FOR:",
+                    artist
+                );
+                console.dir(
+                    data,
+                    {
+                        depth: null
+                    }
+                );
+                if (data.error) {
+                    console.log(
+                        "LAST.FM ERROR:"
+                    );
+                    console.dir(
+                        data,
+                        {
+                            depth: null
+                        }
+                    );
+                    return res.status(400).json({
+                            error:
+                                `Last.fm error ${data.error}: ${data.message}`
+                        });
+                }
+                const tags =
+                    data.toptags?.tag
+                        ?.slice(0, 20)
+                        .map(
+                            (tag) => ({
+                                name:
+                                    tag.name,
+                                count:
+                                    Number(
+                                        tag.count
+                                    )
+                            })
+                        ) || [];
+                console.log(
+                    "TAGS FOUND:",
+                    tags.length
+                );
+                if (
+                    tags.length === 0
+                ) {
+                    return res
+                        .status(400)
+                        .json({
+                            error:
+                                `No music tags found for ${artist}`
+                        });
+                }
+                artistResults.push({
+                    artist:
+                        data.toptags
+                            ?.[
+                                "@attr"
+                            ]
+                            ?.artist ||
+                        artist,
+                    tags
+                });
+            }
+            console.log(
+                "\nLAST.FM ARTIST DATA:"
             );
-
-
-        const identity =
-            generateIdentity(
-                aesthetics
+            console.dir(
+                artistResults,
+                {
+                    depth: null
+                }
             );
-
-
-        const world =
-            generateWorld(
-                aesthetics
+            const composition =
+                calculateComposition(
+                    artistResults
+                );
+            const aesthetics =
+                calculateAesthetics(
+                    composition
+                );
+            const identity =
+                generateIdentity(
+                    aesthetics
+                );
+            const world =
+                generateWorld(
+                    aesthetics
+                );
+            const result = {
+                identity,
+                artists:
+                    artistResults.map(
+                        artist =>
+                            artist.artist
+                    ),
+                composition,
+                world
+            };
+            console.log(
+                "\nSONGSCAPE RESULT:"
             );
-
-
-        const result = {
-
-            identity,
-
-            artists:
-                artistResults.map(
-                    artist => artist.artist
-                ),
-
-            composition,
-
-            world
-
-        };
-
-
-        console.log(
-            "SONGSCAPE RESULT:"
-        );
-
-        console.dir(
-            result,
-            { depth: null }
-        );
-
-
-        res.json(result);
-
-
-    } catch (error) {
-
-        console.error(
-            "SONGSCAPE ERROR:",
-            error
-        );
-
-
-        res.status(500).json({
-            error:
-                "Songscape could not generate your world"
-        });
-
+            console.dir(
+                result,
+                {
+                    depth: null
+                }
+            );
+            res.json(result);
+        }
+        catch (error) {
+            console.error(
+                "\nSONGSCAPE SERVER ERROR:"
+            );
+            console.error(
+                error
+            );
+            res
+                .status(500)
+                .json({
+                    error:
+                        `Songscape server error: ${error.message}`
+                });
+        }
     }
-
-});
-
-
-app.listen(PORT, () => {
-
-    console.log(
-        `Songscape running on port ${PORT}`
-    );
-
-});
+);
+/* ---------------------------------
+   START SERVER
+---------------------------------- */
+app.listen(
+    PORT,
+    () => {
+        console.log(
+            `Songscape running on port ${PORT}`
+        );
+    }
+);
