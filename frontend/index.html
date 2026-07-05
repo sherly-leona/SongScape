@@ -1,83 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>SONGSCAPE</title>
-    <link rel="stylesheet" href="./style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap" rel="stylesheet">
+
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap"
+        rel="stylesheet"
+    >
+
 </head>
+
+
 <body>
+
+
     <section class="title-section">
+
         <div class="tt">
+
             <h1 class="title">
                 SONGSCAPE
             </h1>
+
             <p class="tagline">
                 Where your music becomes a world.
             </p>
+
         </div>
+
     </section>
+
+
+
     <section class="input-section">
+
         <div class="input-info">
+
             <p class="section-label">
                 01 / INPUT
             </p>
+
             <p class="description">
-                NAME THREE ARTISTS
-                <br>
+
+                NAME THREE ARTISTS<br>
+
                 THAT DEFINE YOUR WORLD.
+
             </p>
+
         </div>
+
     </section>
+
+
+
     <section class="identity-section">
-        <form class="artist-form" id="artistForm">
+
+
+        <form
+            class="artist-form"
+            id="artistForm"
+        >
+
+
             <p class="form-title">
+
                 MUSIC IDENTITY
+
             </p>
+
+
+
             <div class="artist-input">
+
                 <label for="artist1">
+
                     ARTIST 01
+
                 </label>
-                <input type="text" id="artist" name="artist1" autocomplete="off" required>
+
+                <input
+                    type="text"
+                    id="artist1"
+                    name="artist1"
+                    autocomplete="off"
+                >
+
             </div>
+
+
+
             <div class="artist-input">
+
                 <label for="artist2">
+
                     ARTIST 02
+
                 </label>
-                <input type="text" id="artist2" name="artist2" autocomplete="off" required>
+
+                <input
+                    type="text"
+                    id="artist2"
+                    name="artist2"
+                    autocomplete="off"
+                >
+
             </div>
+
+
+
             <div class="artist-input">
+
                 <label for="artist3">
+
                     ARTIST 03
+
                 </label>
+
                 <input
                     type="text"
                     id="artist3"
                     name="artist3"
                     autocomplete="off"
-                    required
                 >
+
             </div>
+
+
+
             <button
                 id="generate"
                 type="submit"
             >
+
                 GENERATE →
+
             </button>
+
+
         </form>
+
+
     </section>
+
+
+
     <audio
         id="bgmusic"
         loop
     >
+
         <source
             src="./bgmusic.mp3"
             type="audio/mpeg"
         >
+
     </audio>
+
+
+
     <script src="./script.js"></script>
+
+
 </body>
+
 </html>

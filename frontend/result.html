@@ -3,26 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Songscape | Music Identity</title>
+    <title>
+        Songscape | Music Identity
+    </title>
     <link rel="stylesheet" href="./rstyle.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap" rel="stylesheet">
 </head>
 <body class="result-page">
-    <main class="result-container">
+    <section id="enterScreen">
+        <div class="enter-content">
+            <p class="enter-label">
+                YOUR WORLD HAS BEEN GENERATED
+            </p>
+            <h1 id="enterIdentity">
+                SONGSCAPE
+            </h1>
+            <button id="enterWorldButton">
+                ENTER YOUR WORLD →
+            </button>
+        </div>
+    </section>
+    <main
+        class="result-container hidden-result"
+        id="resultContainer">
         <header class="result-header">
             <p class="result-number">
                 S / 001
             </p>
             <div class="result-brand">
-                <h1>SONGSCAPE</h1>
-                <p>MUSIC IDENTITY</p>
+                <h1>
+                    SONGSCAPE
+                </h1>
+                <p>
+                    MUSIC IDENTITY
+                </p>
             </div>
         </header>
         <section class="identity-result">
             <div class="vinyl-area">
-                <img src="./assets/vinyl.png" alt="Spinning vinyl record" class="vinyl-record">
+                <img
+                    src="./assets/vinyl.png"
+                    alt="Vinyl record"
+                    class="vinyl-record"
+                    id="vinylRecord"
+                >
             </div>
             <div class="identity-info">
                 <h2 id="identityTitle">
@@ -128,6 +154,10 @@
             </div>
         </section>
     </main>
+    <audio
+        id="worldAudio"
+        loop>
+    </audio>
     <script src="./result.js"></script>
 </body>
 </html>

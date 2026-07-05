@@ -590,15 +590,12 @@ app.post(
                     aesthetics
                 );
             const result = {
-                identity,
-                artists:
-                    artistResults.map(
-                        artist =>
-                            artist.artist
-                    ),
-                composition,
-                world
-            };
+                identity,artists: artistResults.map(artist => artist.artist),composition,aesthetics,world};
+
+console.log(
+    "FINAL SONGSCAPE RESULT:",
+    result
+);
             console.log(
                 "\nSONGSCAPE RESULT:"
             );
