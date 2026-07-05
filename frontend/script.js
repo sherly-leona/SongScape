@@ -85,3 +85,96 @@ window.addEventListener("scroll", () => {
         createSticker(lastStickerScroll);
     }
 });
+const artistForm =
+    document.getElementById("artistForm");
+
+
+artistForm.addEventListener(
+    "submit",
+    async (event) => {
+
+        event.preventDefault();
+
+
+        const artists = [
+
+            document
+                .getElementById("artist1")
+                .value
+                .trim(),
+
+            document
+                .getElementById("artist2")
+                .value
+                .trim(),
+
+            document
+                .getElementById("artist3")
+                .value
+                .trim()
+
+        ];
+
+
+        try {
+
+            const response =
+                await fetch("/analyze", {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        artists: artists
+
+                    })
+
+                });
+
+
+            const result =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                alert(result.error);
+
+                return;
+
+            }
+
+
+            sessionStorage.setItem(
+
+                "songscapeResult",
+
+                JSON.stringify(result)
+
+            );
+
+
+            window.location.href =
+                "./result.html";
+
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            alert(
+                "Could not generate your Songscape"
+            );
+
+        }
+
+    }
+);
